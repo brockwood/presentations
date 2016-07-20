@@ -1,0 +1,22 @@
+Go, IoT, And Binary Data
+An In-depth Look
+20 Jul 2016
+Tags: iot, binary, influxdb
+
+Bryan Rockwood
+DevOps Engineer, C2FO
+bryan.rockwood@c2fo.com
+https://github.com/brockwood/
+@BRock97
+
+* The Project
+
+The goals I set out to accomplish:
+
+- Get data from a weather station
+- Process it
+- Store it into a time-series database
+
+* The Target Struct
+
+.code -edit code/raw_packet.go
