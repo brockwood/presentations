@@ -16,7 +16,132 @@ The goals I set out to accomplish:
 - Get data from a weather station
 - Process it
 - Store it into a time-series database
+- Do as much as possible in Go
+- Develop on my Windows desktop
 
-* The Target Struct
+* The Hardware
 
-.code -edit code/raw_packet.go
+- Davis Vantage Pro2 Weather Station
+- Intel Edison IoT Device
+
+* The Weather Station Hardware
+
+The Davis Vantage Pro 2 weather station
+
+.image images/DavisStation.jpg 225 _
+
+.image images/davis_console.jpg 225 _
+
+* The Intel Edison Data Ingest Hardware
+
+.image images/intel-edison.jpg 130 _
+
+- Dual core x86 processor @500MHz
+- 1GB of RAM
+- 4GB built in storage
+- WiFi and Bluetooth built in
+- Slightly larger than a postage stamp
+- Runs [[https://www.yoctoproject.org/][Yocto Linux]]
+- $45 at your local MicroCenter with Aurduino breakout board (which provides USB 2.0 ports)
+
+.caption Specs pulled from [[https://en.wikipedia.org/wiki/Intel_Edison][Wikipedia]]
+
+* The Software
+
+- Time-series Database InfluxDB
+- Custom library written in Go
+- Compiled on Windows And deployed To Edison
+- Utilizes binary package to decode packets from Davis console
+
+* InfluxDB
+
+.image images/influxdb.png 130 _
+
+- Time series DB designed for IoT/sensor data
+- Written in Go!
+- Nice HTTP API
+- Time-centric functions make it easy to do SQL-like queries
+- DB subscriptions send data via UDP to external apps
+
+.link https://influxdata.com/time-series-platform/influxdb/ Free download available here...
+
+* govantage
+
+- Custom library
+- Utilizes [[https://github.com/tarm/serial][github.com/tarm/serial]] to communicate over serial USB
+- Stores to InfluxDB using [[https://github.com/influxdata/influxdb/tree/master/client][their provided Go client]]
+
+.link https://github.com/brockwood/govantage View the source here
+
+* Cross Compiling From Windows To Edison
+
+.image images/cross-compile.png 200 _
+
+.caption Cross compiling with Go is cool!
+
+- Set the GOOS and GOARCH environment variables to the right target
+- Then do a _go_build_-v_<package>_
+- You have an executable for that target
+- *NOTE:* The build will take a bit longer...
+
+.caption [[https://golang.org/doc/install/source#environment][Click here for a list of valid GOOS and GOARCH values]]
+
+* My Helper Script For Git Bash On Windows
+
+.code code/build.sh
+
+.caption This will put the new executable in the root of the GOPATH
+
+* Golang 'binary' Package
+
+- The [[https://golang.org/pkg/encoding/binary/#Read][binary.Read() function]] is the bee's knees!
+- Takes the work out of walking down a byte array and pulling out data
+- The source [[https://en.wikipedia.org/wiki/Endianness][endianness]] is *important* to know...
+
+* Know Your Format
+
+.image images/VPSerialProtocol.png _ 600
+
+.caption [[http://www.davisnet.com/support/weather/download/VantageSerialProtocolDocs_v261.pdf][Source for the above...]]
+
+* Translate That Into A Struct
+
+.link https://github.com/brockwood/govantage/blob/master/vantagepro/raw_loop_packet.go Link to the full struct...
+
+.code code/raw_packet.go
+
+* And In A Few Lines, You Have A Populated Struct!
+
+.code code/binary_read.go
+
+.caption Note that the data coming from the Vantage Pro console is _little_endian_...
+
+* Bonus Section One - Memory Utilization
+
+.code code/top.sh
+
+- Memory is in short supply on this little IoT
+- VSZ memory initially gave me a fright
+- Wasn't obvious why it was taking so much...
+
+* pprof To The Rescue
+
+- Very easy to [[https://golang.org/pkg/net/http/pprof/#pkg-overview][add to your Go application]]
+- Generates neat looking graphs
+- Actual memory utilization is around ~4.2MB
+
+.code code/stats.sh
+
+- Leads me to [[https://golang.org/doc/faq#Why_does_my_Go_process_use_so_much_virtual_memory][this entry why Go uses so much virtual memory]]
+
+* Bonus Section Two - Subscribe To InfluxDB
+
+- Databases in InfluxDB can have subscriptions
+- Sets up a push to a listening server on a UDP port
+- [[https://docs.influxdata.com/influxdb/v0.13/query_language/spec/#create-subscription][Setup is easy]]:
+
+.code code/sub.sh
+
+* A Dirty Example (No Code To Share, Too Scary)
+
+.iframe https://wx.rockhouse.org 500 500

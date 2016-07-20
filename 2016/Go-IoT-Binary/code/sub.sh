@@ -1,0 +1,1 @@
+CREATE SUBSCRIPTION sub0 ON "mydb"."default" DESTINATIONS ALL 'udp://localhost:10000'
